@@ -1,4 +1,4 @@
-#include "password_manager/password_manager.h"
+#include "password_manager/manager.h"
 
 int main()
 {

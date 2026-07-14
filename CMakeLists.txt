@@ -6,12 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
     src/main.cpp
-    src/credentials.cpp
     src/crypto.cpp
-    src/manager.cpp
     src/password_gen.cpp
     src/vault.cpp
-    src/password_manager.cpp
+    src/manager.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <stdexcept>
-#include <iostream> 
-#include <stdint.h>
+
+#include "password_manager\exceptions.h"
+
+#include <cstdint>
 #include <string> // for strings in programm processes
 #include <cstring> // bytes operations (memcopy /  )
 #include <sodium.h>
