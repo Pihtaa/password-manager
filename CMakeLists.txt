@@ -8,7 +8,7 @@ set(SOURCES
     src/main.cpp
     src/crypto.cpp
     src/password_gen.cpp
-    src/vault.cpp
+    src/master.cpp
     src/manager.cpp
 )
 

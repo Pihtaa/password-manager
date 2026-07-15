@@ -1,7 +1,7 @@
 #include "password_manager/crypto.h"
 
 
-Salt  generate_salt()
+Salt  LibsodiumCryptoEngine::generate_salt()
 {
     Salt salt_to_return;
     randombytes_buf(salt_to_return.data(), SALT_SIZE);
@@ -9,7 +9,7 @@ Salt  generate_salt()
 }
 
 
-Nonce generate_nonce()
+Nonce LibsodiumCryptoEngine::generate_nonce()
 {
     Nonce nonce_to_return;
     randombytes_buf(nonce_to_return.data(), NONCE_SIZE);
@@ -17,7 +17,7 @@ Nonce generate_nonce()
 }
 
 
-Key   derive_key(const std::string& password, const Salt& salt)
+Key   LibsodiumCryptoEngine::derive_key(std::string& password, const Salt& salt)
 {
     Key key_to_return;
     if(crypto_pwhash
@@ -27,11 +27,13 @@ Key   derive_key(const std::string& password, const Salt& salt)
     {
         throw KeyDerivationError("Key derivation failed. Out of memory / system collapse.");
     }
+    sodium_memzero(password.data(), password.length());
+    password.clear();
     return key_to_return;
 }
 
 
-std::vector<unsigned char> encrypt(const std::vector<unsigned char>& plaintext,  const Key& key, const Nonce& nonce)
+std::vector<unsigned char> LibsodiumCryptoEngine::encrypt(const std::vector<unsigned char>& plaintext,  const Key& key, const Nonce& nonce)
 {
     std::vector<unsigned char> vector_to_return(static_cast<size_t>(crypto_secretbox_MACBYTES) + plaintext.size()); // crypto_secretbox_MACBYTES - libsodium constant
     if(crypto_secretbox_easy
@@ -44,7 +46,7 @@ std::vector<unsigned char> encrypt(const std::vector<unsigned char>& plaintext, 
 }
 
 
-std::vector<unsigned char> decrypt(const std::vector<unsigned char>& ciphertext, const Key& key, const Nonce& nonce)
+std::vector<unsigned char> LibsodiumCryptoEngine::decrypt(const std::vector<unsigned char>& ciphertext, const Key& key, const Nonce& nonce)
 {
     if(ciphertext.size() < crypto_secretbox_MACBYTES)
     {
