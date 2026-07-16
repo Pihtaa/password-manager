@@ -10,6 +10,7 @@ set(SOURCES
     src/password_gen.cpp
     src/master.cpp
     src/manager.cpp
+    src/vault.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -20,9 +21,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE include)
 find_library(SODIUM_LIB sodium REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SODIUM_LIB})
 
-# потоки
+# json
+find_package(nlohmann_json REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+
+# threads
 find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 
-# копируем папку data
+# copy data
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

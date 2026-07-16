@@ -33,6 +33,48 @@ public:
         sodium_memzero(other.m_data.data(), N);
     }
 
+    SecureData(std::vector<unsigned char>& vec)
+    {
+        if(vec.size() != N) 
+        {
+            throw std::invalid_argument("Vector size doesnt match size of SecureData.");
+        }
+        std::copy(vec.begin(), vec.end(), m_data.begin());
+        sodium_memzero(vec.data(), vec.size());
+    }
+
+    SecureData(std::vector<unsigned char>&& vec)
+    {
+        if(vec.size() != N) 
+        {
+            throw std::invalid_argument("Vector size doesnt match size of SecureData.");
+        }
+        std::copy(vec.begin(), vec.end(), m_data.begin());
+        sodium_memzero(vec.data(), vec.size());
+    }
+
+    SecureData& operator=(std::vector<unsigned char>&& vec)
+    {
+        if(vec.size() != N) 
+        {
+            throw std::invalid_argument("Vector size doesnt match size of SecureData.");
+        }
+        std::copy(vec.begin(), vec.end(), m_data.data());
+        sodium_memzero(vec.data(), vec.size());
+        return *this;
+    }
+
+    SecureData& operator=(std::vector<unsigned char>& vec)
+    {
+        if(vec.size() != N) 
+        {
+            throw std::invalid_argument("Vector size doesnt match size of SecureData.");
+        }
+        std::copy(vec.begin(), vec.end(), m_data,data());
+        sodium_memzero(vec.data(), vec.size());
+        return *this;
+    }
+
     SecureData& operator=(SecureData&& other) noexcept {
         if (this != &other) {
             sodium_memzero(m_data.data(), N);
@@ -42,9 +84,11 @@ public:
         return *this;
     }
 
+
+
     unsigned char* data()             { return m_data.data(); }
     const unsigned char* data() const { return m_data.data(); }
-    static constexpr size_t size()    { return N; }
+    constexpr size_t size() const     { return N; }
 };
 
 // consts
@@ -60,7 +104,7 @@ using Nonce = SecureData<NONCE_SIZE>;
 class ICryptoEngine
 {
 public:
-    virtual Salt  generate_salt() = 0;
+    virtual Salt  generate_salt()  = 0;
     virtual Nonce generate_nonce() = 0;
     virtual Key   derive_key(std::string& password, const Salt& salt) = 0;
     virtual std::vector<unsigned char> encrypt(const std::vector<unsigned char>& plaintext,  const Key& key, const Nonce& nonce) = 0;
