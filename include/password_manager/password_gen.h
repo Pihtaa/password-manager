@@ -14,7 +14,7 @@ struct PasswordParameters
     bool use_special   = true;
 
     void validate() const;
-    size_t min_length() const noexcept; 
+    size_t min_length() const noexcept;
 
 };
 
