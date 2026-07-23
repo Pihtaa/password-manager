@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "password_manager\exceptions.h"
+#include "password_manager\crypto.h"
 #include <sodium.h>
 
 struct PasswordParameters
@@ -20,4 +21,4 @@ struct PasswordParameters
 
 
 
-std::string generate_password(const PasswordParameters& parameters);
+secure_string generate_password(const PasswordParameters& parameters);

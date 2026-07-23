@@ -3,19 +3,19 @@
 
 void PasswordParameters::validate() const
 {
-    size_t min_len = static_cast<size_t>(use_lowercase) + static_cast<size_t>(use_uppercase) +
-                        static_cast<size_t>(use_digits)    + static_cast<size_t>(use_special);
+    size_t min_len = min_length();
+
     if (min_len == 0)
     {
         throw std::invalid_argument("No symbol types selected.");
     }
     if (length < min_len)
     {
-        throw std::invalid_argument("Length too short for selected groups.");
+        throw std::invalid_argument("Length is too short for selected groups.");
     }
     if (length > 64)
     {
-        throw std::invalid_argument("Length too long.");
+        throw std::invalid_argument("Length is too long.");
     }            
 }
 
@@ -28,7 +28,7 @@ size_t PasswordParameters::min_length() const noexcept
 }
 
 
-std::string generate_password(const PasswordParameters& parameters)
+secure_string generate_password(const PasswordParameters& parameters)
 {
     parameters.validate();
     const size_t min_len = parameters.min_length();
@@ -36,9 +36,9 @@ std::string generate_password(const PasswordParameters& parameters)
     static constexpr std::string_view lowercase = "abcdefghijklmnopqrstuvwxyz";
     static constexpr std::string_view uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static constexpr std::string_view digits    = "0123456789";
-    static constexpr std::string_view special   = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+    static constexpr std::string_view special   = "!@#$%^&*-+=_";
 
-    std::string password;
+    secure_string password;
     password.reserve(parameters.length);
     std::string pool;
     pool.reserve(lowercase.length() + uppercase.length() + digits.length() + special.length());
