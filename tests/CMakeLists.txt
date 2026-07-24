@@ -19,9 +19,9 @@ target_link_libraries(test_vault PRIVATE
 )
 add_test(NAME test_vault COMMAND test_vault)
 
-add_executable(test_master test_master.cpp)
+add_executable(test_master test_master.cpp test_main.cpp)
 target_link_libraries(test_master PRIVATE
     password_manager_lib
-    gtest_main
+    gtest
 )
 add_test(NAME test_master COMMAND test_master)

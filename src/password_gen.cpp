@@ -28,7 +28,7 @@ size_t PasswordParameters::min_length() const noexcept
 }
 
 
-secure_string generate_password(const PasswordParameters& parameters)
+secure_string SodiumPasswordGenerator::generate_password(const PasswordParameters& parameters)
 {
     parameters.validate();
     const size_t min_len = parameters.min_length();

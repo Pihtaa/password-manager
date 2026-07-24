@@ -8,7 +8,8 @@ TEST(PasswordGenTest, Works_WhenDefaultParams)
     PasswordParameters params;
 
     // act
-    auto pwd = generate_password(params);
+    SodiumPasswordGenerator spg;
+    auto pwd = spg.generate_password(params);
 
     // assert
     EXPECT_EQ(pwd.length(), params.length);
@@ -35,9 +36,10 @@ TEST(PasswordGenTest, Throws_WhenLengthLessThanMinLength)
 
     // act 
     params.length = 0;
+    SodiumPasswordGenerator spg;
 
     // assert
-    EXPECT_THROW(auto pwd = generate_password(params), std::invalid_argument);
+    EXPECT_THROW(auto pwd = spg.generate_password(params), std::invalid_argument);
 }
 
 TEST(PasswordGenTest, ReturnDifferentPasswords)
@@ -46,8 +48,9 @@ TEST(PasswordGenTest, ReturnDifferentPasswords)
     PasswordParameters params;
 
     // act
-    auto psw1 = generate_password(params);
-    auto psw2 = generate_password(params);
+    SodiumPasswordGenerator spg;
+    auto psw1 = spg.generate_password(params);
+    auto psw2 = spg.generate_password(params);
 
     // assert
     EXPECT_NE(psw1, psw2);
@@ -71,7 +74,8 @@ TEST(PasswordGenTest, Match_WhenSymbolsConfigTTTT)
     low = up = dig = spec = false;
 
     //act
-    auto psw = generate_password(paramsTTTT);
+    SodiumPasswordGenerator spg;
+    auto psw = spg.generate_password(paramsTTTT);
     for(char symbol : psw)
     {
         if(std::islower(symbol)) low = true;
@@ -93,7 +97,8 @@ TEST(PasswordGenTest, Match_SymbolsConfigTTTF)
     low = up = dig = spec = false;
 
     //act
-    auto psw = generate_password(paramsTTTF);
+    SodiumPasswordGenerator spg;
+    auto psw = spg.generate_password(paramsTTTF);
     for(char symbol : psw)
     {
         if(std::islower(symbol)) low = true;
@@ -116,7 +121,8 @@ TEST(PasswordGenTest, Match_SymbolsConfigTFFF)
     low = up = dig = spec = false;
 
     //act
-    auto psw = generate_password(paramsTTTF);
+    SodiumPasswordGenerator spg;
+    auto psw = spg.generate_password(paramsTTTF);
     for(char symbol : psw)
     {
         if(std::islower(symbol)) low = true;
@@ -139,7 +145,8 @@ TEST(PasswordGenTest, Match_SymbolsConfigFTFF)
     low = up = dig = spec = false;
 
     //act
-    auto psw = generate_password(paramsTTTF);
+    SodiumPasswordGenerator spg;
+    auto psw = spg.generate_password(paramsTTTF);
     for(char symbol : psw)
     {
         if(std::islower(symbol)) low = true;

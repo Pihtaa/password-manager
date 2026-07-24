@@ -19,6 +19,19 @@ struct PasswordParameters
 
 };
 
+class IPasswordGenerator
+{
+public:
+    virtual secure_string generate_password(const PasswordParameters& parameters) = 0;
 
+    virtual ~IPasswordGenerator() = default;
+};
 
-secure_string generate_password(const PasswordParameters& parameters);
+class SodiumPasswordGenerator : public IPasswordGenerator
+{
+public:
+    secure_string generate_password(const PasswordParameters& parameters);
+
+};
+
+//secure_string generate_password(const PasswordParameters& parameters);

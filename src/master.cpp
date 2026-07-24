@@ -43,7 +43,7 @@ bool MasterStorageBinFile::data_exists() const
     return false;
 }
 
-bool MasterStorageBinFile::verify_password(const std::string& password) const
+bool MasterStorageBinFile::verify_password(const secure_string& password) const
 {
     if(!data_exists())
     {
@@ -61,7 +61,7 @@ bool MasterStorageBinFile::verify_password(const std::string& password) const
     }
 }
 
-void MasterStorageBinFile::hash_and_save_password(const std::string& password)
+void MasterStorageBinFile::hash_and_save_password(const secure_string& password)
 {
     if(password.length() < crypto_pwhash_PASSWD_MIN)
     {
@@ -80,7 +80,7 @@ void MasterStorageBinFile::hash_and_save_password(const std::string& password)
     save_data(data_to_save);
 }
 
-bool MasterStorageBinFile::is_strong_password(const std::string& password)
+bool MasterStorageBinFile::is_strong_password(const secure_string& password)
 {
     if (password.length() < min_required_length) return false;
     
@@ -92,15 +92,15 @@ bool MasterStorageBinFile::is_strong_password(const std::string& password)
     for (char c : password)
     {
         if (std::islower(c)) has_lower = true;
-        if (std::isupper(c)) has_upper = true;
-        if (std::isdigit(c)) has_digit = true;
-        if (std::ispunct(c)) has_special = true;
+        else if (std::isupper(c)) has_upper = true;
+        else if (std::isdigit(c)) has_digit = true;
+        else if (std::ispunct(c)) has_special = true;
     }
 
-    return has_lower && has_upper && has_digit && has_special;
+    return has_lower && has_upper && has_digit;// && has_special;
 }
 
-bool MasterStorageBinFile::change_security_level(const std::string& password, SecurityLevel sec_level)
+bool MasterStorageBinFile::change_security_level(const secure_string& password, SecurityLevel sec_level)
 {
     if(verify_password(password))
     {
@@ -126,7 +126,7 @@ bool MasterStorageBinFile::change_security_level(const std::string& password, Se
 }
 
 
-bool MasterStorageBinFile::initialize_password_with_approvement(const std::string& password)
+bool MasterStorageBinFile::initialize_password_with_approvement(const secure_string& password)
 {
     if(!is_strong_password(password))
     {
