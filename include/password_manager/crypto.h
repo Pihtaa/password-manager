@@ -36,6 +36,16 @@ public:
         m_data = std::move(vec);
     }
 
+    bool operator==(const SecureData& other) const noexcept 
+    {
+       return m_data == other.m_data; 
+    }
+    
+    auto operator<=>(const SecureData& other) const noexcept
+    {
+        return m_data <=> other.m_data;
+    }
+
     unsigned char* data() noexcept    { return m_data.data(); }
     const unsigned char* data() const noexcept { return m_data.data(); }
     size_t size() const noexcept      { return N; }
