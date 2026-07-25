@@ -60,6 +60,4 @@ public:
     bool verify_password(const secure_string& password) const override;
     bool data_exists() const override; 
     bool change_security_level(const secure_string& password, SecurityLevel sec_level) override;
-
-
 };
