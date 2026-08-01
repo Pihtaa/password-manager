@@ -1,19 +1,17 @@
 #pragma once
 
-
-#include "password_manager\exceptions.h"
-#include "password_manager\sodium_allocator.h"
-
 #include <cstdint>
-#include <string> // for strings in programm processes
-#include <cstring> // bytes operations (memcopy /  )
-#include <sodium.h>
+#include <string>
 #include <vector>
-#include <array>
-#include <iostream>
+
+#include <sodium.h>
+
+#include "password_manager/sec_level.h"
+#include "password_manager/exceptions.h"
+#include "password_manager/sodium_allocator.h"
 
 
-template <size_t N>
+template <std::size_t N>
 class SecureData
 {
 private:
@@ -52,15 +50,14 @@ public:
 };
 
 // consts
-constexpr int SALT_SIZE  = crypto_pwhash_SALTBYTES;
-constexpr int KEY_SIZE   = crypto_secretbox_KEYBYTES;
-constexpr int NONCE_SIZE = crypto_secretbox_NONCEBYTES;
+constexpr std::size_t SALT_SIZE  = crypto_pwhash_SALTBYTES;
+constexpr std::size_t KEY_SIZE   = crypto_secretbox_KEYBYTES;
+constexpr std::size_t NONCE_SIZE = crypto_secretbox_NONCEBYTES;
 
 // custom types
 using Salt  = SecureData<SALT_SIZE>;
 using Key   = SecureData<KEY_SIZE>;
 using Nonce = SecureData<NONCE_SIZE>;
-
 
 
 class ICryptoEngine
@@ -71,25 +68,30 @@ public:
     virtual Key   derive_key(const secure_string& password, const Salt& salt) = 0;
     virtual secure_vector<unsigned char> encrypt(const secure_vector<unsigned char>& plaintext,  const Key& key, const Nonce& nonce) = 0;
     virtual secure_vector<unsigned char> decrypt(const secure_vector<unsigned char>& ciphertext, const Key& key, const Nonce& nonce) = 0;
-
+    virtual void change_security_level(SecurityLevel sec_level) = 0;
+    virtual SecurityLevel get_security_level() const = 0;
     virtual ~ICryptoEngine() = default;
 };
 
 
 class LibsodiumCryptoEngine : public ICryptoEngine
 {
+private:
+    unsigned long long m_opslimit;
+    unsigned long long m_memlimit;
+
+    void set_opslimit(unsigned long long opslimit);
+    void set_memlimit(unsigned long long memlimit);
+
+    SecurityLevel m_cur_sec_level;
 public:
+    LibsodiumCryptoEngine(SecurityLevel sec_level = SecurityLevel::Moderate);
+
     Salt  generate_salt()  override;
     Nonce generate_nonce() override;
     Key   derive_key(const secure_string& password, const Salt& salt) override;
     secure_vector<unsigned char> encrypt(const secure_vector<unsigned char>& plaintext,  const Key& key, const Nonce& nonce) override;
     secure_vector<unsigned char> decrypt(const secure_vector<unsigned char>& ciphertext, const Key& key, const Nonce& nonce) override;
-
-    LibsodiumCryptoEngine()
-    {
-        if(sodium_init() < 0)
-        {
-            throw SodiumInitError("Sodium initialization error.");
-        }
-    }
+    void change_security_level(SecurityLevel sec_level) override;
+    SecurityLevel get_security_level() const override;
 };

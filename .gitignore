@@ -6,3 +6,5 @@ data/
 *.exe
 *.o
 *.a
+opencode.json
+.opencodeignore

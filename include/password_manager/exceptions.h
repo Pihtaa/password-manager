@@ -2,7 +2,6 @@
 
 #include <stdexcept>
 
-
 // custom exceptions
 struct KeyDerivationError          : std::runtime_error { using std::runtime_error::runtime_error; };
 struct EncryptionError             : std::runtime_error { using std::runtime_error::runtime_error; };
@@ -19,3 +18,5 @@ struct VaultError                  : std::runtime_error { using std::runtime_err
 struct LibsodiunInitError          : std::runtime_error { using std::runtime_error::runtime_error; };
 struct VaultRangeError             : std::runtime_error { using std::runtime_error::runtime_error; };
 struct SecureDataVecSizeError      : std::runtime_error { using std::runtime_error::runtime_error; };
+struct VaultSecLevelFileWriteError : std::runtime_error { using std::runtime_error::runtime_error; };
+struct VaultSecLevelFileReadError  : std::runtime_error { using std::runtime_error::runtime_error; };

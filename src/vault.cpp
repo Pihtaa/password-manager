@@ -158,7 +158,31 @@ Vault::Vault(std::unique_ptr<IVaultStorage> storage, std::unique_ptr<ICryptoEngi
     : m_storage(std::move(storage)), m_crypto_engine(std::move(crypto_engine)), m_formatter(std::move(cred_formatter))
 {
     RawVaultData raw_vault_data;
-    if(!storage -> vault_exists())
+    
+    std::ifstream file(m_sec_level_filename);
+    if (file.is_open())
+    {
+        int temp = 0;
+        if (file >> temp)
+        {
+            if (temp >= 0 && temp < static_cast<int>(SecurityLevel::MAX))
+            { 
+                m_crypto_engine -> change_security_level(static_cast<SecurityLevel>(temp));
+            }
+            else
+            {
+                throw VaultSecLevelFileReadError("Corrupted file data in " + m_sec_level_filename + 
+                ": invalid SecurityLevel value (" + std::to_string(temp) + 
+                "). Expected range [0, " + std::to_string(static_cast<int>(SecurityLevel::MAX) - 1) + "]");
+            }
+        }
+        else
+        {
+            throw VaultSecLevelFileReadError("Failed to read vault sec level if file " + m_sec_level_filename + ".");
+        }
+    }
+
+    if(!m_storage -> vault_exists())
     {
         raw_vault_data.salt = m_crypto_engine -> generate_salt();
         m_salt = raw_vault_data.salt;
@@ -178,12 +202,12 @@ Vault::Vault(std::unique_ptr<IVaultStorage> storage, std::unique_ptr<ICryptoEngi
     }
     else
     {
-        raw_vault_data = m_storage -> load_vault();
-        m_session_key = m_crypto_engine -> derive_key(password, raw_vault_data.salt);
+        raw_vault_data = m_storage->load_vault();
+        m_session_key = m_crypto_engine->derive_key(password, raw_vault_data.salt);
         m_salt = raw_vault_data.salt;
 
-        secure_vector<unsigned char> decrypted_bin_credentials = m_crypto_engine -> decrypt(raw_vault_data.ciphertext, m_session_key, raw_vault_data.nonce);
-        m_credentials = m_formatter -> decode(decrypted_bin_credentials);
+        secure_vector<unsigned char> decrypted_bin_credentials = m_crypto_engine->decrypt(raw_vault_data.ciphertext, m_session_key, raw_vault_data.nonce);
+        m_credentials = m_formatter->decode(decrypted_bin_credentials);
 
     }
 }
@@ -191,7 +215,6 @@ Vault::Vault(std::unique_ptr<IVaultStorage> storage, std::unique_ptr<ICryptoEngi
 void Vault::add(Credentials&& new_credentials)
 {
     m_credentials.push_back(std::move(new_credentials));
-    m_is_changed = true;
 }
 
 
@@ -200,7 +223,6 @@ void Vault::remove(size_t pos)
     if(pos < m_credentials.size())
     {
         m_credentials.erase(m_credentials.begin() + pos);
-        m_is_changed = true;
     }
     else
     {
@@ -211,20 +233,29 @@ void Vault::remove(size_t pos)
 
 void Vault::save()
 {
-    if(!m_is_changed)
+    std::ofstream file(m_sec_level_filename);
+    if (file.is_open())
     {
-        return;
+        file << static_cast<int>(m_crypto_engine->get_security_level());
     }
-    RawVaultData new_data;
+    else
+    {
+        throw VaultSecLevelFileWriteError("Failed to open file to save security level.");
+    }
 
-    new_data.nonce = m_crypto_engine -> generate_nonce();
+    RawVaultData new_data;
+    new_data.nonce = m_crypto_engine->generate_nonce();
     new_data.salt = m_salt;
-    new_data.ciphertext = m_crypto_engine -> encrypt(m_formatter -> encode(m_credentials), m_session_key, new_data.nonce);
+    new_data.ciphertext = m_crypto_engine->encrypt(m_formatter->encode(m_credentials), m_session_key, new_data.nonce);
 
     m_storage -> save_raw_data(new_data);
-    m_is_changed = false;
 }
 
 
+void Vault::change_key_derivation_security_level(const secure_string& password, SecurityLevel sec_level)
+{
 
-
+    m_crypto_engine->change_security_level(sec_level);
+    m_session_key = m_crypto_engine->derive_key(password, m_salt);
+    save();
+}

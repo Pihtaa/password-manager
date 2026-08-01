@@ -1,5 +1,7 @@
-#include"password_manager\crypto.h"
-#include"password_manager\sodium_allocator.h"
+#pragma once
+
+#include"password_manager/crypto.h"
+#include"password_manager/sodium_allocator.h"
 
 #include<memory>
 #include<iostream>
@@ -51,17 +53,17 @@ public:
     virtual void save_raw_data(const RawVaultData& raw_vault_data) = 0;
     virtual RawVaultData load_vault() const = 0;
 
-
     virtual ~IVaultStorage() = default;
 };
 
-class VaultStorageJson : public IVaultStorage
+class VaultStorageJson final : public IVaultStorage
 {
 private:
     std::string m_filename;
 
     secure_string bin_to_base64(const void* data, size_t size) const;
     secure_vector<unsigned char> base64_to_bin(std::string& base64_str) const;
+
 public:
     bool vault_exists() const override;
     void save_raw_data(const RawVaultData& raw_vault_data) override;
@@ -79,7 +81,7 @@ public:
     // method to call afted decryption to get real data from encoded data
 };
 
-class JsonCredentialsFormatter : public ICredentialsFormatter
+class JsonCredentialsFormatter final : public ICredentialsFormatter
 {
 public:
     secure_vector<unsigned char> encode(const secure_vector<Credentials>& cred_vector_for_formatting) override;
@@ -94,16 +96,18 @@ private:
     std::unique_ptr<ICryptoEngine> m_crypto_engine;
     std::unique_ptr<ICredentialsFormatter> m_formatter;    
 
+    std::string m_sec_level_filename = "security_level";
     secure_vector<Credentials> m_credentials;
-    bool m_is_changed = false;
     Key m_session_key;
     Salt m_salt; 
+
 public:
     explicit Vault(std::unique_ptr<IVaultStorage> storage, std::unique_ptr<ICryptoEngine> crypto_engine,
         std::unique_ptr<ICredentialsFormatter> cred_formatter, const secure_string& password);
     
+    const secure_vector<Credentials>& get_credentials() const { return m_credentials; }
+    void change_key_derivation_security_level(const secure_string& password, SecurityLevel sec_level);
     void save();
     void add(Credentials&& credentials);
     void remove(size_t pos);
-    
 };

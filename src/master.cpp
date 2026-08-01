@@ -80,58 +80,44 @@ void MasterStorageBinFile::hash_and_save_password(const secure_string& password)
     save_data(data_to_save);
 }
 
-bool MasterStorageBinFile::is_strong_password(const secure_string& password)
-{
-    if (password.length() < min_required_length) return false;
-    
-    bool has_lower   = false;
-    bool has_upper   = false;
-    bool has_digit   = false;
-    bool has_special = false;
 
+void MasterStorageBinFile::change_security_level(SecurityLevel sec_level)
+{
+    switch(sec_level)
+    {
+    case SecurityLevel::Low:
+        set_opslimit(crypto_pwhash_OPSLIMIT_MIN);
+        set_memlimit(crypto_pwhash_MEMLIMIT_MIN);
+        break;
+    case SecurityLevel::Moderate:
+        set_opslimit(crypto_pwhash_OPSLIMIT_MODERATE);
+        set_memlimit(crypto_pwhash_MEMLIMIT_MODERATE);
+        break;
+    case SecurityLevel::High:
+        set_opslimit(crypto_pwhash_OPSLIMIT_SENSITIVE);
+        set_memlimit(crypto_pwhash_MEMLIMIT_SENSITIVE);
+        break;
+    }
+}
+
+
+bool BasicPasswordStrengthChecker::is_strong(const secure_string& password) const
+{
+    if (password.length() < m_min_length) return false;
+
+    bool has_lower = false, has_upper = false, has_digit = false, has_special = false;
     for (char c : password)
     {
-        if (std::islower(c)) has_lower = true;
-        else if (std::isupper(c)) has_upper = true;
-        else if (std::isdigit(c)) has_digit = true;
-        else if (std::ispunct(c)) has_special = true;
+        if (std::islower(static_cast<unsigned char>(c))) has_lower = true;
+        if (std::isupper(static_cast<unsigned char>(c))) has_upper = true;
+        if (std::isdigit(static_cast<unsigned char>(c))) has_digit = true;
     }
-
-    return has_lower && has_upper && has_digit;// && has_special;
-}
-
-bool MasterStorageBinFile::change_security_level(const secure_string& password, SecurityLevel sec_level)
-{
-    if(verify_password(password))
-    {
-        switch(sec_level)
-        {
-        case SecurityLevel::Low:
-            set_opslimit(crypto_pwhash_OPSLIMIT_MIN);
-            set_memlimit(crypto_pwhash_MEMLIMIT_MIN);
-            break;
-        case SecurityLevel::Moderate:
-            set_opslimit(crypto_pwhash_OPSLIMIT_MODERATE);
-            set_memlimit(crypto_pwhash_MEMLIMIT_MODERATE);
-            break;
-        case SecurityLevel::High:
-            set_opslimit(crypto_pwhash_OPSLIMIT_SENSITIVE);
-            set_memlimit(crypto_pwhash_MEMLIMIT_SENSITIVE);
-            break;
-        }
-        hash_and_save_password(password);
-        return true;
-    }
-    return false;
+    return has_lower && has_upper && has_digit;
 }
 
 
-bool MasterStorageBinFile::initialize_password_with_approvement(const secure_string& password)
+std::string BasicPasswordStrengthChecker::requirements_description() const
 {
-    if(!is_strong_password(password))
-    {
-        return false;
-    }
-    hash_and_save_password(password);
-    return true;
+    return "At least " + std::to_string(m_min_length) + 
+            " characters, with lowercase, uppercase and digit.";
 }
