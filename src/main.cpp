@@ -71,8 +71,9 @@ int main()
                   << "2) Add credential\n"
                   << "3) Remove credential\n"
                   << "4) Change security level\n"
-                  << "5) Exit\n"
-                  << "> ";
+                  << "5) Change master password\n"
+                  << "6) Exit\n"
+                  << ">_ ";
 
         int choice;
         std::cin >> choice;
@@ -150,6 +151,28 @@ int main()
             break;
         }
         case 5:
+        {
+            secure_string cur_master_password;
+            std::cout << "Enter current master password: ";
+            std::getline(std::cin, cur_master_password);
+            if (!app.verify_master_password(cur_master_password)) {
+                std::cout << "Wrong password.\n";
+                break;
+            }
+            const auto& creds = app.get_credentials();
+            secure_string new_password;
+            std::cout << "Enter new password: ";
+            std::getline(std::cin, new_password);
+            if (!app.check_master_password_strength(new_password)) {
+                std::cout << "New password is too weak.\n";
+            } else {
+                app.put_master_password(new_password);
+                app.rederive_master_key(new_password);
+                std::cout << "New password is set.\n";
+            }
+            
+        }   
+        case 6:
             app.save();
             app.logout();
             running = false;

@@ -1,4 +1,4 @@
-#include"password_manager\master.h"
+#include"password_manager/master.h"
 
 void MasterStorageBinFile::save_data(const MasterPasswordData& master_password_data)
 {

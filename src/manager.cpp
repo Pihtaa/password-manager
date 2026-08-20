@@ -1,4 +1,4 @@
-#include "password_manager\manager.h"
+#include "password_manager/manager.h"
 
 PasswordManagerApp::PasswordManagerApp(std::unique_ptr<IMasterStorage> master_storage,
                        std::unique_ptr<IPasswordStrengthChecker> checker,
@@ -22,9 +22,28 @@ bool PasswordManagerApp::is_first_run() const
 }
 
 
+bool PasswordManagerApp::check_master_password_strength(const secure_string& password) const
+{
+    return m_checker->is_strong(password);
+}
+
+
+void PasswordManagerApp::put_master_password(const secure_string& password)
+{
+    m_master_storage->hash_and_save_password(password);
+}
+
+
+void PasswordManagerApp::rederive_master_key(const secure_string& password)
+{
+    if(!is_logged_in()) return;
+    m_vault->rederive_key(password);
+}
+
+
 bool PasswordManagerApp::setup_master_password(const secure_string& password)
 {
-    if(! (m_checker->is_strong(password)))
+    if (!(m_checker->is_strong(password)))
     {
         return false;
     }
@@ -35,11 +54,11 @@ bool PasswordManagerApp::setup_master_password(const secure_string& password)
 
 bool PasswordManagerApp::login(const secure_string& password)
 {
-    if(is_logged_in())
+    if (is_logged_in())
     {
         return true;
     }
-    if(!m_master_storage->verify_password(password))
+    if (!m_master_storage->verify_password(password))
     {
         return false;
     }
@@ -52,6 +71,12 @@ bool PasswordManagerApp::login(const secure_string& password)
 bool PasswordManagerApp::is_logged_in() const
 {
     return m_vault != nullptr;
+}
+
+
+bool PasswordManagerApp::verify_master_password(const secure_string& password) const
+{
+    return m_master_storage->verify_password(password);
 }
 
 
@@ -75,11 +100,11 @@ void PasswordManagerApp::remove_credentials(size_t index)
 
 void PasswordManagerApp::change_security_level(const secure_string& master_password, SecurityLevel sec_level)
 {
-    if(!is_logged_in())
+    if (!is_logged_in())
     {
         return;
     }
-    if(!m_master_storage->verify_password(master_password))
+    if (!m_master_storage->verify_password(master_password))
     {
         return;
     }
@@ -98,7 +123,7 @@ void PasswordManagerApp::save()
 
 void PasswordManagerApp::logout()
 {
-    if(!is_logged_in()) return;
+    if (!is_logged_in()) return;
 
     save();
     m_vault.reset();

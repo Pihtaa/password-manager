@@ -1,4 +1,4 @@
-#include"password_manager\vault.h"
+#include "password_manager/vault.h"
 
 
 std::ostream& operator<<(std::ostream& os, const Credentials& cred)
@@ -167,7 +167,7 @@ Vault::Vault(std::unique_ptr<IVaultStorage> storage, std::unique_ptr<ICryptoEngi
         {
             if (temp >= 0 && temp < static_cast<int>(SecurityLevel::MAX))
             { 
-                m_crypto_engine -> change_security_level(static_cast<SecurityLevel>(temp));
+                m_crypto_engine->change_security_level(static_cast<SecurityLevel>(temp));
             }
             else
             {
@@ -182,13 +182,13 @@ Vault::Vault(std::unique_ptr<IVaultStorage> storage, std::unique_ptr<ICryptoEngi
         }
     }
 
-    if(!m_storage -> vault_exists())
+    if(!m_storage->vault_exists())
     {
-        raw_vault_data.salt = m_crypto_engine -> generate_salt();
+        raw_vault_data.salt = m_crypto_engine->generate_salt();
         m_salt = raw_vault_data.salt;
-        raw_vault_data.nonce = m_crypto_engine -> generate_nonce();
+        raw_vault_data.nonce = m_crypto_engine->generate_nonce();
 
-        m_session_key = m_crypto_engine -> derive_key(password, raw_vault_data.salt);
+        m_session_key = m_crypto_engine->derive_key(password, raw_vault_data.salt);
 
         json json_empty_credentials = json::array();
 
@@ -197,8 +197,8 @@ Vault::Vault(std::unique_ptr<IVaultStorage> storage, std::unique_ptr<ICryptoEngi
         sodium_memzero(json_str.data(), json_str.size());
         json_str.clear();
 
-        raw_vault_data.ciphertext = m_crypto_engine -> encrypt(empty_plaintext, m_session_key, raw_vault_data.nonce);
-        m_storage -> save_raw_data(raw_vault_data);
+        raw_vault_data.ciphertext = m_crypto_engine->encrypt(empty_plaintext, m_session_key, raw_vault_data.nonce);
+        m_storage->save_raw_data(raw_vault_data);
     }
     else
     {
@@ -234,12 +234,9 @@ void Vault::remove(size_t pos)
 void Vault::save()
 {
     std::ofstream file(m_sec_level_filename);
-    if (file.is_open())
-    {
+    if (file.is_open()) {
         file << static_cast<int>(m_crypto_engine->get_security_level());
-    }
-    else
-    {
+    } else {
         throw VaultSecLevelFileWriteError("Failed to open file to save security level.");
     }
 
@@ -248,7 +245,13 @@ void Vault::save()
     new_data.salt = m_salt;
     new_data.ciphertext = m_crypto_engine->encrypt(m_formatter->encode(m_credentials), m_session_key, new_data.nonce);
 
-    m_storage -> save_raw_data(new_data);
+    m_storage->save_raw_data(new_data);
+}
+
+
+void Vault::rederive_key(const secure_string& new_master_password)
+{
+    m_session_key = m_crypto_engine->derive_key(new_master_password, m_salt);
 }
 
 
@@ -258,4 +261,74 @@ void Vault::change_key_derivation_security_level(const secure_string& password, 
     m_crypto_engine->change_security_level(sec_level);
     m_session_key = m_crypto_engine->derive_key(password, m_salt);
     save();
+}
+
+
+bool MultiVaultJsonStorage::vault_exists() const
+{
+    std::filesystem::path path = m_filename;
+    if (std::filesystem::exists(path) && !std::filesystem::is_empty(path)) {
+        return true;
+    }
+    return false;
+}
+
+
+std::vector<VaultData> MultiVaultJsonStorage::load_vault() const
+{
+    return m_vaults_data;
+}
+
+
+void MultiVaultJsonStorage::add_new_vault_data(const VaultData& vault_data)
+{
+    m_vaults_data.push_back(vault_data);
+}
+
+
+bool MultiVaultJsonStorage::delete_vault_data(const std::size_t index)
+{
+    if (index >= m_vaults_data.size()) return false;
+    m_vaults_data.erase(m_vaults_data.begin() + index);
+    return true;
+}
+
+
+void MultiVaultJsonStorage::save()
+{
+    std::ofstream file(m_filename);
+    if (file.fail()) {
+        throw VaultFileWriteError("Failed to write in multi vault json storage file. ");
+    }
+
+    json json_array = json::array();
+    for (const auto& cur_data : m_vaults_data) {
+        json_array.push_back({
+            {"file_name", cur_data.file_name},
+            {"time_added", cur_data.time_added}
+        });
+    }
+
+    file << json_array.dump(4);
+}
+
+
+MultiVaultJsonStorage::MultiVaultJsonStorage(const std::string& filename)
+    : m_filename(filename)
+{
+    if (!std::filesystem::exists(m_filename) || std::filesystem::is_empty(m_filename)) {
+        return;
+    }
+
+    std::ifstream ifs(m_filename);
+    if (ifs.fail()) {
+        return;
+    }
+    json json_vault = json::parse(ifs);
+    for (const json& json_struct : json_vault) {
+        VaultData cur_data;
+        cur_data.file_name = json_struct["file_name"].get<std::string>();
+        cur_data.time_added = json_struct["time_added"].get<uint64_t>();
+        m_vaults_data.push_back(std::move(cur_data));
+    }
 }

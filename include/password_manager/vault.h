@@ -1,13 +1,14 @@
 #pragma once
 
-#include"password_manager/crypto.h"
-#include"password_manager/sodium_allocator.h"
+#include "password_manager/crypto.h"
+#include "password_manager/sodium_allocator.h"
 
-#include<memory>
-#include<iostream>
-#include<nlohmann/json.hpp>
-#include<fstream>
-#include<filesystem>
+#include <memory>
+#include <iostream>
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <filesystem>
+#include <cstdint>
 
 
 using json = nlohmann::json;
@@ -96,7 +97,7 @@ private:
     std::unique_ptr<ICryptoEngine> m_crypto_engine;
     std::unique_ptr<ICredentialsFormatter> m_formatter;    
 
-    std::string m_sec_level_filename = "security_level";
+    std::string m_sec_level_filename = "security_level.bin";
     secure_vector<Credentials> m_credentials;
     Key m_session_key;
     Salt m_salt; 
@@ -106,8 +107,44 @@ public:
         std::unique_ptr<ICredentialsFormatter> cred_formatter, const secure_string& password);
     
     const secure_vector<Credentials>& get_credentials() const { return m_credentials; }
+    void rederive_key(const secure_string& new_master_password);
     void change_key_derivation_security_level(const secure_string& password, SecurityLevel sec_level);
     void save();
     void add(Credentials&& credentials);
     void remove(size_t pos);
+};
+
+
+struct VaultData
+{
+    std::string file_name;
+    uint64_t time_added;
+};
+
+
+class IMultiVaultStorage
+{
+public:
+    virtual bool vault_exists() const = 0;
+    virtual std::vector<VaultData> load_vault() const = 0;
+    virtual void add_new_vault_data(const VaultData& vault_data) = 0;
+    virtual bool delete_vault_data(const std::size_t index) = 0;
+    virtual void save() = 0; // must be implicitly called in the every usage end of IMultiVaultStorage
+
+    virtual ~IMultiVaultStorage() = default;
+};
+
+
+class MultiVaultJsonStorage : public IMultiVaultStorage
+{
+private:
+    std::string m_filename;
+    std::vector<VaultData> m_vaults_data;
+public:
+    explicit MultiVaultJsonStorage(const std::string& filename = "vaults.json");
+    bool vault_exists() const override;
+    std::vector<VaultData> load_vault() const override;
+    void add_new_vault_data(const VaultData& vault_data) override;
+    bool delete_vault_data(const std::size_t index) override;
+    void save() override;
 };

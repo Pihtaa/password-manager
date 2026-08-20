@@ -1,4 +1,4 @@
-#include "password_manager\password_gen.h"
+#include "password_manager/password_gen.h"
 
 
 void PasswordParameters::validate() const

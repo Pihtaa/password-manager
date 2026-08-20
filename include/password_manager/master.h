@@ -4,9 +4,9 @@
 #include<array>
 #include<sodium.h>
 #include<fstream>
-#include"password_manager\crypto.h"
-#include"password_manager\sodium_allocator.h"
-#include"password_manager\sec_level.h"
+#include"password_manager/crypto.h"
+#include"password_manager/sodium_allocator.h"
+#include"password_manager/sec_level.h"
 
 using Hashed_password_str = std::array<char, crypto_pwhash_STRBYTES>;
 
